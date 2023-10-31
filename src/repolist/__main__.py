@@ -7,6 +7,7 @@ from typing import Any, NewType, TypeAlias
 import click
 import ghreq
 from ghtoken import get_ghtoken
+from . import __version__
 
 Repo = NewType("Repo", dict[str, Any])
 
@@ -44,6 +45,12 @@ def null_filter(_: Repo) -> bool:
 
 
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
+@click.version_option(
+    __version__,
+    "-V",
+    "--version",
+    message="%(prog)s %(version)s",
+)
 @click.option(
     "-A",
     "--archived",
