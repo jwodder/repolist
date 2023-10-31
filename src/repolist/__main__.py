@@ -95,6 +95,11 @@ def main(
     archive_filter: RepoFilter | None,
     fork_filter: RepoFilter | None,
 ) -> None:
+    """
+    List & filter GitHub repositories
+
+    Visit <https://github.com/jwodder/repolist> for more information.
+    """
     matcher = Matcher()
     if archive_filter is not None:
         matcher.add(archive_filter)
