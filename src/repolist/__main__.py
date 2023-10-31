@@ -40,6 +40,18 @@ def field_filter(field: str, value: Any) -> RepoFilter:
     return filterfunc
 
 
+def language_filter(language: str) -> RepoFilter:
+    language = language.lower()
+
+    def filterfunc(r: Repo) -> bool:
+        if (lang := r["language"]) is not None:
+            return bool(lang.lower() == language)
+        else:
+            return False
+
+    return filterfunc
+
+
 def null_filter(_: Repo) -> bool:
     return True
 
@@ -88,12 +100,19 @@ def null_filter(_: Repo) -> bool:
     is_flag=True,
     help="Output JSON objects for each repository",
 )
+@click.option(
+    "-L",
+    "--language",
+    help="Only show repositories for the given programming language",
+    metavar="NAME",
+)
 @click.argument("owner", nargs=-1)
 def main(
     owner: tuple[str, ...],
     dump_json: bool,
     archive_filter: RepoFilter | None,
     fork_filter: RepoFilter | None,
+    language: str | None,
 ) -> None:
     """
     List & filter GitHub repositories
@@ -109,6 +128,8 @@ def main(
         matcher.add(fork_filter)
     else:
         matcher.add(field_filter("fork", False))
+    if language is not None:
+        matcher.add(language_filter(language))
     with Client(
         token=get_ghtoken(),
         user_agent=ghreq.make_user_agent("repolist", __version__, url=__url__),
