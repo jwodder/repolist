@@ -52,6 +52,15 @@ def language_filter(language: str) -> RepoFilter:
     return filterfunc
 
 
+def topic_filter(topic: str) -> RepoFilter:
+    topic = topic.lower()
+
+    def filterfunc(r: Repo) -> bool:
+        return topic in r["topics"]
+
+    return filterfunc
+
+
 def null_filter(_: Repo) -> bool:
     return True
 
@@ -106,6 +115,13 @@ def null_filter(_: Repo) -> bool:
     help="Only show repositories for the given programming language",
     metavar="NAME",
 )
+@click.option(
+    "-T",
+    "--topic",
+    help="Only show repositories with the given topic",
+    metavar="TOPIC",
+    multiple=True,
+)
 @click.argument("owner", nargs=-1)
 def main(
     owner: tuple[str, ...],
@@ -113,6 +129,7 @@ def main(
     archive_filter: RepoFilter | None,
     fork_filter: RepoFilter | None,
     language: str | None,
+    topic: tuple[str, ...],
 ) -> None:
     """
     List & filter GitHub repositories
@@ -130,6 +147,8 @@ def main(
         matcher.add(field_filter("fork", False))
     if language is not None:
         matcher.add(language_filter(language))
+    for t in topic:
+        matcher.add(topic_filter(t))
     with Client(
         token=get_ghtoken(),
         user_agent=ghreq.make_user_agent("repolist", __version__, url=__url__),
