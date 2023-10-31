@@ -122,6 +122,9 @@ def null_filter(_: Repo) -> bool:
     metavar="TOPIC",
     multiple=True,
 )
+@click.option(
+    "--no-topics", is_flag=True, help="Only show repositories without any topics"
+)
 @click.argument("owner", nargs=-1)
 def main(
     owner: tuple[str, ...],
@@ -130,6 +133,7 @@ def main(
     fork_filter: RepoFilter | None,
     language: str | None,
     topic: tuple[str, ...],
+    no_topics: bool,
 ) -> None:
     """
     List & filter GitHub repositories
@@ -149,6 +153,8 @@ def main(
         matcher.add(language_filter(language))
     for t in topic:
         matcher.add(topic_filter(t))
+    if no_topics:
+        matcher.add(field_filter("topics", []))
     with Client(
         token=get_ghtoken(),
         user_agent=ghreq.make_user_agent("repolist", __version__, url=__url__),
