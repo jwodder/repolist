@@ -7,7 +7,7 @@ from typing import Any, NewType, TypeAlias
 import click
 import ghreq
 from ghtoken import get_ghtoken
-from . import __version__
+from . import __url__, __version__
 
 Repo = NewType("Repo", dict[str, Any])
 
@@ -109,7 +109,10 @@ def main(
         matcher.add(fork_filter)
     else:
         matcher.add(field_filter("fork", False))
-    with Client(token=get_ghtoken()) as client:
+    with Client(
+        token=get_ghtoken(),
+        user_agent=ghreq.make_user_agent("repolist", __version__, url=__url__),
+    ) as client:
         repos: Iterable[Repo]
         if owner:
             repos = chain.from_iterable(client.get_repos_for_owner(o) for o in owner)
