@@ -1,19 +1,12 @@
-#!/usr/bin/env python3
-# /// pyproject
-# [run]
-# requires-python = ">=3.10"
-# dependencies = ["click ~= 8.0", "ghreq ~= 0.1", "ghtoken ~= 0.1"]
-# ///
-
 from __future__ import annotations
-from collections.abc import Iterator, Callable
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
 from itertools import chain
 import json
+from typing import Any, NewType, TypeAlias
 import click
 import ghreq
 from ghtoken import get_ghtoken
-from typing import Any, NewType, TypeAlias
 
 Repo = NewType("Repo", dict[str, Any])
 
