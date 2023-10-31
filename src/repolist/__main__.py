@@ -1,5 +1,5 @@
 from __future__ import annotations
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass, field
 from itertools import chain
 import json
@@ -34,7 +34,7 @@ class Matcher:
 
 def field_filter(field: str, value: Any) -> RepoFilter:
     def filterfunc(r: Repo) -> bool:
-        return r[field] == value
+        return bool(r[field] == value)
 
     return filterfunc
 
@@ -92,6 +92,7 @@ def main(
     else:
         matcher.add(field_filter("fork", False))
     with Client(token=get_ghtoken()) as client:
+        repos: Iterable[Repo]
         if owner:
             repos = chain.from_iterable(client.get_repos_for_owner(o) for o in owner)
         else:
