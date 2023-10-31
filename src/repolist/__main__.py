@@ -81,7 +81,13 @@ def null_filter(_: Repo) -> bool:
     type=click.UNPROCESSED,
     help="Only list forks",
 )
-@click.option("-J", "--json", "dump_json", is_flag=True)
+@click.option(
+    "-J",
+    "--json",
+    "dump_json",
+    is_flag=True,
+    help="Output JSON objects for each repository",
+)
 @click.argument("owner", nargs=-1)
 def main(
     owner: tuple[str, ...],
