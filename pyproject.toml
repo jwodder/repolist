@@ -17,6 +17,7 @@ authors = [
 keywords = [
     "GitHub",
     "GitHub repositories",
+    "GitHub repository management",
 ]
 
 classifiers = [

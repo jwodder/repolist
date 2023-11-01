@@ -179,9 +179,9 @@ class ArrayFormatter:
     "--affiliation",
     type=affiliation_validator,
     help=(
-        "Only show repositories with the given affiliations.  The value must be"
+        "Only list repositories with the given affiliations.  The value must be"
         ' a comma-separated list of "owner", "collaborator", and/or'
-        ' "organization_member".  (Only for the authenticating user)'
+        ' "organization_member".  (Only for the authenticated user)'
     ),
     metavar="AFFILIATION",
 )
@@ -235,30 +235,30 @@ class ArrayFormatter:
 @click.option(
     "-L",
     "--language",
-    help="Only show repositories for the given programming language",
+    help="Only list repositories for the given programming language",
     metavar="NAME",
 )
 @click.option(
     "--private-only",
     "visibility",
     flag_value="private",
-    help="Only show private repositories (Only for the authenticating user)",
+    help="Only list private repositories (Only for the authenticated user)",
 )
 @click.option(
     "--public-only",
     "visibility",
     flag_value="public",
-    help="Only show public repositories (Only for the authenticating user)",
+    help="Only list public repositories (Only for the authenticated user)",
 )
 @click.option(
     "-T",
     "--topic",
-    help="Only show repositories with the given topic",
+    help="Only list repositories with the given topic",
     metavar="TOPIC",
     multiple=True,
 )
 @click.option(
-    "--no-topics", is_flag=True, help="Only show repositories without any topics"
+    "--no-topics", is_flag=True, help="Only list repositories without any topics"
 )
 @click.version_option(
     __version__,
