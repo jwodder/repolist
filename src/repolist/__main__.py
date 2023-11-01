@@ -22,12 +22,18 @@ class Client(ghreq.Client):
             Repo,
             self.paginate(
                 "/user/repos",
-                params={"visibility": visibility, "affiliation": affiliation},
+                params={
+                    "visibility": visibility,
+                    "affiliation": affiliation,
+                    "per_page": 100,
+                },
             ),
         )
 
     def get_repos_for_owner(self, owner: str) -> Iterator[Repo]:
-        return map(Repo, self.paginate(f"/users/{owner}/repos"))
+        return map(
+            Repo, self.paginate(f"/users/{owner}/repos", params={"per_page": 100})
+        )
 
 
 @dataclass
