@@ -15,8 +15,10 @@ RepoFilter: TypeAlias = Callable[[Repo], bool]
 
 
 class Client(ghreq.Client):
-    def get_my_repos(self) -> Iterator[Repo]:
-        return map(Repo, self.paginate("/user/repos"))
+    def get_my_repos(self, visibility: str | None) -> Iterator[Repo]:
+        return map(
+            Repo, self.paginate("/user/repos", params={"visibility": visibility})
+        )
 
     def get_repos_for_owner(self, owner: str) -> Iterator[Repo]:
         return map(Repo, self.paginate(f"/users/{owner}/repos"))
@@ -116,6 +118,18 @@ def null_filter(_: Repo) -> bool:
     metavar="NAME",
 )
 @click.option(
+    "--private-only",
+    "visibility",
+    flag_value="private",
+    help="Only show private repositories (Only for the authenticating user)",
+)
+@click.option(
+    "--public-only",
+    "visibility",
+    flag_value="public",
+    help="Only show public repositories (Only for the authenticating user)",
+)
+@click.option(
     "-T",
     "--topic",
     help="Only show repositories with the given topic",
@@ -134,6 +148,7 @@ def main(
     language: str | None,
     topic: tuple[str, ...],
     no_topics: bool,
+    visibility: str | None,
 ) -> None:
     """
     List & filter GitHub repositories
@@ -155,6 +170,11 @@ def main(
         matcher.add(topic_filter(t))
     if no_topics:
         matcher.add(field_filter("topics", []))
+    if visibility is not None and owner:
+        raise click.UsageError(
+            "Public/private options cannot be used when listing repositories"
+            " for other users"
+        )
     with Client(
         token=get_ghtoken(),
         user_agent=ghreq.make_user_agent("repolist", __version__, url=__url__),
@@ -163,7 +183,7 @@ def main(
         if owner:
             repos = chain.from_iterable(client.get_repos_for_owner(o) for o in owner)
         else:
-            repos = client.get_my_repos()
+            repos = client.get_my_repos(visibility=visibility)
         for r in repos:
             if matcher(r):
                 if dump_json:
