@@ -15,9 +15,15 @@ RepoFilter: TypeAlias = Callable[[Repo], bool]
 
 
 class Client(ghreq.Client):
-    def get_my_repos(self, visibility: str | None) -> Iterator[Repo]:
+    def get_my_repos(
+        self, visibility: str | None, affiliation: str | None
+    ) -> Iterator[Repo]:
         return map(
-            Repo, self.paginate("/user/repos", params={"visibility": visibility})
+            Repo,
+            self.paginate(
+                "/user/repos",
+                params={"visibility": visibility, "affiliation": affiliation},
+            ),
         )
 
     def get_repos_for_owner(self, owner: str) -> Iterator[Repo]:
@@ -67,12 +73,34 @@ def null_filter(_: Repo) -> bool:
     return True
 
 
+def affiliation_validator(s: str) -> str:
+    if any(
+        opt not in {"owner", "collaborator", "organization_member"}
+        for opt in s.split(",")
+    ):
+        raise ValueError(
+            '--affilition value must be a comma-separated list of "owner",'
+            ' "collaborator", and/or "organization_member"'
+        )
+    return s
+
+
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(
     __version__,
     "-V",
     "--version",
     message="%(prog)s %(version)s",
+)
+@click.option(
+    "--affiliation",
+    type=affiliation_validator,
+    help=(
+        "Only show repositories with the given affiliations.  Value must be a"
+        ' comma-separated list of "owner", "collaborator", and/or'
+        ' "organization_member".  (Only for the authenticating user)'
+    ),
+    metavar="AFFILIATION",
 )
 @click.option(
     "-A",
@@ -149,6 +177,7 @@ def main(
     topic: tuple[str, ...],
     no_topics: bool,
     visibility: str | None,
+    affiliation: str | None,
 ) -> None:
     """
     List & filter GitHub repositories
@@ -175,6 +204,10 @@ def main(
             "Public/private options cannot be used when listing repositories"
             " for other users"
         )
+    if affiliation is not None and owner:
+        raise click.UsageError(
+            "--affiliation cannot be used when listing repositories for other users"
+        )
     with Client(
         token=get_ghtoken(),
         user_agent=ghreq.make_user_agent("repolist", __version__, url=__url__),
@@ -183,7 +216,7 @@ def main(
         if owner:
             repos = chain.from_iterable(client.get_repos_for_owner(o) for o in owner)
         else:
-            repos = client.get_my_repos(visibility=visibility)
+            repos = client.get_my_repos(visibility=visibility, affiliation=affiliation)
         for r in repos:
             if matcher(r):
                 if dump_json:
