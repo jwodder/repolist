@@ -3,11 +3,16 @@ from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass, field
 from itertools import chain
 import json
-from typing import Any, NewType, TypeAlias
+from textwrap import indent
+from types import TracebackType
+from typing import TYPE_CHECKING, Any, NewType, Protocol, TypeAlias
 import click
 import ghreq
 from ghtoken import get_ghtoken
 from . import __url__, __version__
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 Repo = NewType("Repo", dict[str, Any])
 
@@ -91,19 +96,91 @@ def affiliation_validator(s: str) -> str:
     return s
 
 
+class Formatter(Protocol):
+    def __enter__(self) -> Self:
+        ...
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        ...
+
+    def show(self, repo: Repo) -> None:
+        ...
+
+
+@dataclass
+class FullNameFormatter:
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        _exc_val: BaseException | None,
+        _exc_tb: TracebackType | None,
+    ) -> None:
+        pass
+
+    def show(self, repo: Repo) -> None:
+        print(repo["full_name"])
+
+
+@dataclass
+class JsonFormatter:
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        _exc_val: BaseException | None,
+        _exc_tb: TracebackType | None,
+    ) -> None:
+        pass
+
+    def show(self, repo: Repo) -> None:
+        print(json.dumps(repo, indent=4))
+
+
+@dataclass
+class ArrayFormatter:
+    first: bool = field(init=False, default=True)
+
+    def __enter__(self) -> Self:
+        print("[", end="")
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        _exc_val: BaseException | None,
+        _exc_tb: TracebackType | None,
+    ) -> None:
+        if exc_type is None:
+            if not self.first:
+                print()
+            print("]")
+
+    def show(self, repo: Repo) -> None:
+        if self.first:
+            print()
+            self.first = False
+        else:
+            print(",")
+        print(indent(json.dumps(repo, indent=4), " " * 4), end="")
+
+
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
-@click.version_option(
-    __version__,
-    "-V",
-    "--version",
-    message="%(prog)s %(version)s",
-)
 @click.option(
     "--affiliation",
     type=affiliation_validator,
     help=(
-        "Only show repositories with the given affiliations.  Value must be a"
-        ' comma-separated list of "owner", "collaborator", and/or'
+        "Only show repositories with the given affiliations.  The value must be"
+        ' a comma-separated list of "owner", "collaborator", and/or'
         ' "organization_member".  (Only for the authenticating user)'
     ),
     metavar="AFFILIATION",
@@ -124,6 +201,14 @@ def affiliation_validator(s: str) -> str:
     help="Only list archived repositories",
 )
 @click.option(
+    "--array",
+    "formatter",
+    flag_value=ArrayFormatter,
+    type=click.UNPROCESSED,
+    is_flag=True,
+    help="Output an array of JSON objects",
+)
+@click.option(
     "-F",
     "--forks",
     "fork_filter",
@@ -141,9 +226,11 @@ def affiliation_validator(s: str) -> str:
 @click.option(
     "-J",
     "--json",
-    "dump_json",
+    "formatter",
+    flag_value=JsonFormatter,
+    type=click.UNPROCESSED,
     is_flag=True,
-    help="Output JSON objects for each repository",
+    help="Output a JSON object for each repository",
 )
 @click.option(
     "-L",
@@ -173,10 +260,16 @@ def affiliation_validator(s: str) -> str:
 @click.option(
     "--no-topics", is_flag=True, help="Only show repositories without any topics"
 )
+@click.version_option(
+    __version__,
+    "-V",
+    "--version",
+    message="%(prog)s %(version)s",
+)
 @click.argument("owner", nargs=-1)
 def main(
     owner: tuple[str, ...],
-    dump_json: bool,
+    formatter: type[Formatter] | None,
     archive_filter: RepoFilter | None,
     fork_filter: RepoFilter | None,
     language: str | None,
@@ -190,6 +283,8 @@ def main(
 
     Visit <https://github.com/jwodder/repolist> for more information.
     """
+    if formatter is None:
+        formatter = FullNameFormatter
     matcher = Matcher()
     if archive_filter is not None:
         matcher.add(archive_filter)
@@ -223,12 +318,10 @@ def main(
             repos = chain.from_iterable(client.get_repos_for_owner(o) for o in owner)
         else:
             repos = client.get_my_repos(visibility=visibility, affiliation=affiliation)
-        for r in repos:
-            if matcher(r):
-                if dump_json:
-                    print(json.dumps(r, indent=4))
-                else:
-                    print(r["full_name"])
+        with formatter() as fmt:
+            for r in repos:
+                if matcher(r):
+                    fmt.show(r)
 
 
 if __name__ == "__main__":
