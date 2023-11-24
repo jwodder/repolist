@@ -91,6 +91,20 @@ Options
                                 when no usernames are given on the command
                                 line.
 
+-R, --reverse                   Reverse the sort order
+
+-S, --sort-by <created|updated|pushed|full_name>
+                                Sort the repositories for each
+                                user/organization based on the given attribute.
+                                [default: ``full_name``]
+
+                                Note that sorting only applies on a
+                                per-user/organization basis.  If multiple users
+                                or organizations are specified on the command
+                                line, the repositories for each individual
+                                owner are sorted, but repositories from
+                                different owners are not merged together.
+
 -T, --topic TOPIC               Only list repositories with the given topic
                                 (case insensitive).  This option can be given
                                 multiple times to only list repositories with

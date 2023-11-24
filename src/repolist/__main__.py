@@ -21,13 +21,19 @@ RepoFilter: TypeAlias = Callable[[Repo], bool]
 
 class Client(ghreq.Client):
     def get_my_repos(
-        self, visibility: str | None, affiliation: str | None
+        self,
+        sort_by: str,
+        reverse: bool,
+        visibility: str | None,
+        affiliation: str | None,
     ) -> Iterator[Repo]:
         return map(
             Repo,
             self.paginate(
                 "/user/repos",
                 params={
+                    "sort": sort_by,
+                    "direction": "desc" if reverse else "asc",
                     "visibility": visibility,
                     "affiliation": affiliation,
                     "per_page": 100,
@@ -35,9 +41,19 @@ class Client(ghreq.Client):
             ),
         )
 
-    def get_repos_for_owner(self, owner: str) -> Iterator[Repo]:
+    def get_repos_for_owner(
+        self, owner: str, sort_by: str, reverse: bool
+    ) -> Iterator[Repo]:
         return map(
-            Repo, self.paginate(f"/users/{owner}/repos", params={"per_page": 100})
+            Repo,
+            self.paginate(
+                f"/users/{owner}/repos",
+                params={
+                    "sort": sort_by,
+                    "direction": "desc" if reverse else "asc",
+                    "per_page": 100,
+                },
+            ),
         )
 
 
@@ -250,6 +266,15 @@ class ArrayFormatter:
     flag_value="public",
     help="Only list public repositories (Only for the authenticated user)",
 )
+@click.option("-R", "--reverse", is_flag=True, help="Reverse sort order")
+@click.option(
+    "-S",
+    "--sort-by",
+    type=click.Choice(["created", "updated", "pushed", "full_name"]),
+    default="full_name",
+    help="What to sort each owner's repositories by",
+    show_default=True,
+)
 @click.option(
     "-T",
     "--topic",
@@ -277,6 +302,8 @@ def main(
     no_topics: bool,
     visibility: str | None,
     affiliation: str | None,
+    sort_by: str,
+    reverse: bool,
 ) -> None:
     """
     List & filter GitHub repositories
@@ -315,9 +342,17 @@ def main(
     ) as client:
         repos: Iterable[Repo]
         if owner:
-            repos = chain.from_iterable(client.get_repos_for_owner(o) for o in owner)
+            repos = chain.from_iterable(
+                client.get_repos_for_owner(o, sort_by=sort_by, reverse=reverse)
+                for o in owner
+            )
         else:
-            repos = client.get_my_repos(visibility=visibility, affiliation=affiliation)
+            repos = client.get_my_repos(
+                sort_by=sort_by,
+                reverse=reverse,
+                visibility=visibility,
+                affiliation=affiliation,
+            )
         with formatter() as fmt:
             for r in repos:
                 if matcher(r):
