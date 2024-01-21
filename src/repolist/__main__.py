@@ -96,6 +96,15 @@ def topic_filter(topic: str) -> RepoFilter:
     return filterfunc
 
 
+def topic_exclude(topic: str) -> RepoFilter:
+    topic = topic.lower()
+
+    def filterfunc(r: Repo) -> bool:
+        return topic not in r["topics"]
+
+    return filterfunc
+
+
 def null_filter(_: Repo) -> bool:
     return True
 
@@ -276,9 +285,16 @@ class ArrayFormatter:
     show_default=True,
 )
 @click.option(
-    "-T",
+    "-t",
     "--topic",
     help="Only list repositories with the given topic",
+    metavar="TOPIC",
+    multiple=True,
+)
+@click.option(
+    "-T",
+    "--exclude-topic",
+    help="Only list repositories without the given topic",
     metavar="TOPIC",
     multiple=True,
 )
@@ -299,6 +315,7 @@ def main(
     fork_filter: RepoFilter | None,
     language: str | None,
     topic: tuple[str, ...],
+    exclude_topic: tuple[str, ...],
     no_topics: bool,
     visibility: str | None,
     affiliation: str | None,
@@ -325,6 +342,8 @@ def main(
         matcher.add(language_filter(language))
     for t in topic:
         matcher.add(topic_filter(t))
+    for t in exclude_topic:
+        matcher.add(topic_exclude(t))
     if no_topics:
         matcher.add(field_filter("topics", []))
     if visibility is not None and owner:
