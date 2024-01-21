@@ -276,7 +276,7 @@ class ArrayFormatter:
     show_default=True,
 )
 @click.option(
-    "-T",
+    "-t",
     "--topic",
     help="Only list repositories with the given topic",
     metavar="TOPIC",

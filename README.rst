@@ -105,7 +105,7 @@ Options
                                 owner are sorted, but repositories from
                                 different owners are not merged together.
 
--T, --topic TOPIC               Only list repositories with the given topic
+-t, --topic TOPIC               Only list repositories with the given topic
                                 (case insensitive).  This option can be given
                                 multiple times to only list repositories with
                                 all of the specified topics.
