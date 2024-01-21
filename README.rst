@@ -110,6 +110,10 @@ Options
                                 multiple times to only list repositories with
                                 all of the specified topics.
 
+-T, --exclude-topic TOPIC       Only list repositories without the given topic
+                                (case insensitive).  This option can be given
+                                multiple times.
+
 --no-topics                     Only list repositories without any topics
 
 .. _jq: https://jqlang.github.io/jq/
