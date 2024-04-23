@@ -1,10 +1,12 @@
-.. image:: https://www.repostatus.org/badges/latest/concept.svg
+|repostatus| |license|
+
+.. |repostatus| image:: https://www.repostatus.org/badges/latest/concept.svg
     :target: https://www.repostatus.org/#concept
     :alt: Project Status: Concept – Minimal or no implementation has been done
           yet, or the repository is only intended to be a limited example,
           demo, or proof-of-concept.
 
-.. image:: https://img.shields.io/github/license/jwodder/repolist.svg
+.. |license| image:: https://img.shields.io/github/license/jwodder/repolist.svg
     :target: https://opensource.org/licenses/MIT
     :alt: MIT License
 
