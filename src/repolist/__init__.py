@@ -7,7 +7,7 @@ to you or other users/organizations on GitHub.
 Visit <https://github.com/jwodder/repolist> for more information.
 """
 
-__version__ = "0.1.0.dev"
+__version__ = "0.1.0.dev1"
 __author__ = "John T. Wodder II"
 __author_email__ = "repolist@varonathe.org"
 __license__ = "MIT"
