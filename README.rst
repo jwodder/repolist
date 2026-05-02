@@ -99,7 +99,7 @@ Options
 
 -R, --reverse                   Reverse the sort order
 
--S, --sort-by <created|updated|pushed|full_name>
+-S, --sort-by {created|updated|pushed|full_name}
                                 Sort the repositories for each
                                 user/organization based on the given attribute.
                                 [default: ``full_name``]
